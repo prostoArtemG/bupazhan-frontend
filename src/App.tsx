@@ -34,7 +34,7 @@ function App() {
   useEffect(() => {
     const fetchPairs = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/pairs');
+        const res = await axios.get('https://bupazhan-backend.onrender.com/pairs');
         console.log('Данные из /pairs:', res.data); // Дебаг
         setPairsData(res.data);
       } catch (error) {
