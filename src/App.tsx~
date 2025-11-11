@@ -26,7 +26,7 @@ interface ImbZone {
 interface PairData {
   price: number;
   dist_to_ema: number;
-  fvg_count: number;
+  win_rate: number;
   imb_5m: ImbZone;
   imb_15m: ImbZone;
   imb_1h: ImbZone;
@@ -55,6 +55,18 @@ function App() {
     };
 
     fetchPairs();
+
+    // WebSocket для real-time обновлений
+    const ws = new WebSocket('ws://localhost:8000/ws');  // Замени на Render URL для Vercel
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setPairsData(data);
+    };
+    ws.onopen = () => console.log('WS подключён');
+    ws.onerror = (error) => console.error('WS ошибка:', error);
+    ws.onclose = () => console.log('WS закрыт');
+
+    return () => ws.close();  // Cleanup при unmount
   }, []);
 
   const openChart = async (pair: string) => {
@@ -121,9 +133,10 @@ function App() {
     if (!imb.type) return '—';
     const color = imb.type === 'bullish' ? 'green' : 'red';
     const emoji = imb.type === 'bullish' ? '🟢' : '🔴';
+    const typeText = imb.type === 'bullish' ? 'Бычий' : 'Медвежий';
     return (
       <span style={{ color, fontWeight: 'bold' }}>
-        {emoji} {imb.type === 'bullish' ? 'Бычий' : 'Медвежий'} {imb.size_pct}% ({imb.time_since}) — {imb.status}
+        {emoji} {typeText} {imb.size_pct}% ({imb.time_since}) — {imb.status}
       </span>
     );
   };
@@ -148,7 +161,7 @@ function App() {
                 <th>Пара</th>
                 <th>Цена</th>
                 <th>% до EMA</th>
-                <th>FVG зон</th>
+                <th>Win Rate %</th>
                 <th>IMB 5m</th>
                 <th>IMB 15m</th>
                 <th>IMB 1h</th>
@@ -163,7 +176,7 @@ function App() {
                   </td>
                   <td>{Number(data.price).toFixed(2)}</td>
                   <td>{Number(data.dist_to_ema).toFixed(2)}%</td>
-                  <td>{data.fvg_count}</td>
+                  <td>{Number(data.win_rate).toFixed(1)}%</td>
                   <td>{renderImb(data.imb_5m)}</td>
                   <td>{renderImb(data.imb_15m)}</td>
                   <td>{renderImb(data.imb_1h)}</td>
