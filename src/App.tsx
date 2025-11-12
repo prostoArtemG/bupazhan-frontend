@@ -16,21 +16,12 @@ import styles from './App.module.css';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, annotationPlugin);
 
-interface ImbZone {
-  type: 'bullish' | 'bearish' | null;
-  size_pct: number;
-  time_since: string;
-  status: string;
-}
-
 interface PairData {
   price: number;
   dist_to_ema: number;
   fvg_count: number;
-  imb_5m: ImbZone;
-  imb_15m: ImbZone;
-  imb_1h: ImbZone;
-  imb_4h: ImbZone;
+  win_rate: number;
+  imb: { bullish: number; bearish: number };
 }
 
 function App() {
@@ -44,7 +35,7 @@ function App() {
   useEffect(() => {
     const fetchPairs = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/pairs');
+        const res = await axios.get('https://bupazhan-backend.onrender.com/pairs');
         console.log('Данные из /pairs:', res.data);
         setPairsData(res.data);
       } catch (error) {
@@ -60,7 +51,7 @@ function App() {
   const openChart = async (pair: string) => {
     setSelectedPair(pair);
     try {
-      const scanRes = await axios.get(`http://localhost:8000/scan?pair=${pair}`);
+      const scanRes = await axios.get(`https://bupazhan-backend.onrender.com/scan?pair=${pair}`);
       console.log('Данные чарта:', scanRes.data);
       setOhlcv(scanRes.data.ohlcv || []);
       setEma(scanRes.data.ema || 0);
@@ -117,17 +108,6 @@ function App() {
     },
   };
 
-  const renderImb = (imb: ImbZone) => {
-    if (!imb.type) return '—';
-    const color = imb.type === 'bullish' ? 'green' : 'red';
-    const emoji = imb.type === 'bullish' ? '🟢' : '🔴';
-    return (
-      <span style={{ color, fontWeight: 'bold' }}>
-        {emoji} {imb.type === 'bullish' ? 'Бычий' : 'Медвежий'} {imb.size_pct}% ({imb.time_since}) — {imb.status}
-      </span>
-    );
-  };
-
   if (loading) return <div className={styles.loading}>Загрузка...</div>;
 
   return (
@@ -140,7 +120,7 @@ function App() {
       <section className={styles.section}>
         <h2>Таблица валютных пар</h2>
         {Object.keys(pairsData).length === 0 ? (
-          <p>Данные загружаются или бэк не запущен (проверь uvicorn на 8000)</p>
+          <p>Данные загружаются или бэк не запущен (проверь Render URL)</p>
         ) : (
           <table className={styles.table}>
             <thead>
@@ -149,10 +129,8 @@ function App() {
                 <th>Цена</th>
                 <th>% до EMA</th>
                 <th>FVG зон</th>
-                <th>IMB 5m</th>
-                <th>IMB 15m</th>
-                <th>IMB 1h</th>
-                <th>IMB 4h</th>
+                <th>IMB</th>
+                <th>Win Rate %</th>
               </tr>
             </thead>
             <tbody>
@@ -164,10 +142,10 @@ function App() {
                   <td>{Number(data.price).toFixed(2)}</td>
                   <td>{Number(data.dist_to_ema).toFixed(2)}%</td>
                   <td>{data.fvg_count}</td>
-                  <td>{renderImb(data.imb_5m)}</td>
-                  <td>{renderImb(data.imb_15m)}</td>
-                  <td>{renderImb(data.imb_1h)}</td>
-                  <td>{renderImb(data.imb_4h)}</td>
+                  <td>
+                    <span style={{ color: 'green' }}>{data.imb?.bullish || 0}</span> / <span style={{ color: 'red' }}>{data.imb?.bearish || 0}</span>
+                  </td>
+                  <td>{Number(data.win_rate).toFixed(1)}%</td>
                 </tr>
               ))}
             </tbody>
