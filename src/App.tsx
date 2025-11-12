@@ -44,7 +44,7 @@ function App() {
   useEffect(() => {
     const fetchPairs = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/pairs');
+        const res = await axios.get('https://bupazhan-backend.onrender.com/pairs');
         console.log('Данные из /pairs:', res.data);
         setPairsData(res.data);
       } catch (error) {
@@ -60,7 +60,7 @@ function App() {
   const openChart = async (pair: string) => {
     setSelectedPair(pair);
     try {
-      const scanRes = await axios.get(`http://localhost:8000/scan?pair=${pair}`);
+      const scanRes = await axios.get(`https://bupazhan-backend.onrender.com/scan?pair=${pair}`);
       console.log('Данные чарта:', scanRes.data);
       setOhlcv(scanRes.data.ohlcv || []);
       setEma(scanRes.data.ema || 0);
@@ -140,7 +140,7 @@ function App() {
       <section className={styles.section}>
         <h2>Таблица валютных пар</h2>
         {Object.keys(pairsData).length === 0 ? (
-          <p>Данные загружаются или бэк не запущен (проверь uvicorn на 8000)</p>
+          <p>Данные загружаются или бэк не запущен (проверь Render)</p>
         ) : (
           <table className={styles.table}>
             <thead>
